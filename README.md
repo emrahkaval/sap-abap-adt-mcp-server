@@ -1,4 +1,4 @@
-# SAP ABAP Remote File System MCP Server
+# SAP ABAP ADT MCP Server
 
 An MCP (Model Context Protocol) server that provides access to SAP ABAP objects via the ADT (ABAP Development Tools) REST API. This server allows AI assistants to browse and read SAP ABAP objects like programs, classes, function groups, and more through a standardized interface.
 
