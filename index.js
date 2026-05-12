@@ -51,7 +51,7 @@ class SapAbapMcpServer {
   async initialize() {
     // Create MCP server
     this.server = createServer({
-      name: 'sap-abap-remotefs',
+      name: 'sap-abap-adt',
       version: '1.0.0'
     }, {
       capabilities: {
@@ -83,13 +83,16 @@ class SapAbapMcpServer {
       }
 
       // Define the ABAP object types we want to browse
+      // Based on standard ADT repository infometypes
       const objectTypes = [
         { type: 'PROG/P', name: 'ABAP Programs', endpoint: '/sap/bc/adt/repository/infometypes/prog/objects' },
         { type: 'CLAS/OC', name: 'ABAP Classes', endpoint: '/sap/bc/adt/repository/infometypes/clas/objects' },
         { type: 'FUGR/F', name: 'Function Groups', endpoint: '/sap/bc/adt/repository/infometypes/fugr/objects' },
         { type: 'TABL/DT', name: 'Database Tables', endpoint: '/sap/bc/adt/repository/infometypes/tabd/objects' },
         { type: 'DTEL/DE', name: 'Data Elements', endpoint: '/sap/bc/adt/repository/infometypes/dtel/objects' },
-        { type: 'DOMA', name: 'Domains', endpoint: '/sap/bc/adt/repository/infometypes/doma/objects' }
+        { type: 'DOMA', name: 'Domains', endpoint: '/sap/bc/adt/repository/infometypes/doma/objects' },
+        { type: 'DDIC/TABL', name: 'DDIC Tables', endpoint: '/sap/bc/adt/dictionary/tables' },
+        { type: 'DDIC/VIEW', name: 'DDIC Views', endpoint: '/sap/bc/adt/dictionary/views' }
       ];
 
       const resources = [];
@@ -154,13 +157,16 @@ class SapAbapMcpServer {
       const objectName = decodeURIComponent(encodedObjectName);
 
       // Map object type to ADT endpoint
+      // Based on standard ADT URL patterns from SAP documentation
       const endpointMap = {
         'PROG/P': `/sap/bc/adt/programs/programs/${encodeURIComponent(objectName)}/source/main`,
         'CLAS/OC': `/sap/bc/adt/classes/classes/${encodeURIComponent(objectName)}/source/main`,
-        'FUGR/F': `/sap/bc/adt/objects/class/${encodeURIComponent(objectName)}`, // Function groups are a bit different
+        'FUGR/F': `/sap/bc/adt/objects/class/${encodeURIComponent(objectName)}`, // Function groups
         'TABL/DT': `/sap/bc/adt/tables/table/${encodeURIComponent(objectName)}/source/main`,
         'DTEL/DE': `/sap/bc/adt/data/elements/dataelement/${encodeURIComponent(objectName)}/source/main`,
-        'DOMA': `/sap/bc/adt/domains/domain/${encodeURIComponent(objectName)}/source/main`
+        'DOMA': `/sap/bc/adt/domains/domain/${encodeURIComponent(objectName)}/source/main`,
+        'DDIC/TABL': `/sap/bc/adt/dictionary/tables/${encodeURIComponent(objectName)}`,
+        'DDIC/VIEW': `/sap/bc/adt/dictionary/views/${encodeURIComponent(objectName)}`
       };
 
       const endpoint = endpointMap[objectType];

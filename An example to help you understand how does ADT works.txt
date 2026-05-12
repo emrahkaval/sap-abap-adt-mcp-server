@@ -1,0 +1,307 @@
+Close Reader View
+
+  * Text and layout
+  *
+
+
+        Text
+
+    Text size
+
+    Font
+
+    Font weight
+
+    ------------------------------------------------------------------------
+
+
+        Layout
+
+    ------------------------------------------------------------------------
+
+
+        Advanced
+
+    Text alignment
+
+    Reset defaults
+
+  * Theme
+  *
+
+
+        Theme
+
+    Default
+
+    Custom
+
+    Auto
+
+    Light
+
+    Dark
+
+    Sepia
+
+    Contrast
+
+    Gray
+
+      o
+      o
+      o
+      o
+  o
+    Reset defaults
+
+  * Sesli oku (N)
+  *
+
+
+        Sesli oku
+
+    ------------------------------------------------------------------------
+
+
+        Ses
+
+    Varsayılan
+
+    VarsayılanMicrosoft David - English (United States)Microsoft David
+    Desktop - English (United States)Microsoft Mark - English (United
+    States)Microsoft Zira - English (United States)Microsoft Zira
+    Desktop - English (United States)
+
+community.sap.com <https://community.sap.com/t5/technology-blog-posts-
+by-sap/an-example-to-help-you-understand-how-does-adt-work/ba-p/13262858>
+
+
+  An example to help you understand how does ADT work
+
+JerryWang
+7–9 minutes
+------------------------------------------------------------------------
+
+
+  * Explore ADT by switching on ABAP communication log
+    <#jive_content_id_Explore_ADT_by_switching_on_ABAP_communication_log>
+
+  * An example to understand how does ADT infrastructure responds
+    <#jive_content_id_An_example_to_understand_how_does_ADT_infrastructure_responds>
+
+      o 1. Create a BAdI implementation on BAdI definition
+        BADI_ADT_REST_RFC_APPLICATION
+        <#jive_content_id_1_Create_a_BAdI_implementation_on_BAdI_definition_BADI_ADT_REST_RFC_APPLICATION>
+
+      o 2. Create resource class ZCL_ADT_RES_PRODUCT
+        <#jive_content_id_2_Create_resource_class_ZCL_ADT_RES_PRODUCT>
+
+      o 3. create content handler class ZCL_ADT_RES_PRO_CONTENT_HANDLE
+        <#jive_content_id_3_create_content_handler_class_ZCL_ADT_RES_PRO_CONTENT_HANDLE>
+
+
+
+  * Test the sample <#jive_content_id_Test_the_sample>
+
+
+Have you even thought about why you could operate on ABAP backend system
+using ADT?
+
+This document just gives a brief introduction about how does the ADT
+backend infrastructure respond your operation done in Eclipse. It
+contains a hands-on exercise which you could finish in your own ABAP system.
+
+
+    Explore ADT by switching on ABAP communication log
+
+In order to explore what has happened when we do operations in Eclipse,
+we need to switch on ABAP communication log.
+
+Click Windows->show view. Make view "ABAP Communication Log" is displayed.
+
+Then click button "Start Logging":
+
+Try to create one report:
+
+And then you could observe several logs for this report creation. The
+latest log appears in the topmost of the table.
+
+Now you could know that your operation in Eclipse is sent to ABAP
+backend system via HTTP Get and HTTP Post with dedicated url and gets
+processed in ABAP backend. Double click on each line to get the detail view.
+
+In the report creation scenario, the request sent to ABAP backend are
+just the same as normal what you have done in SAP GUI to create one report:
+
+1. a query is sent via to check whether the report ZTEST_REPORT_JERRY
+already exists or not.
+
+2. Do transport checks based on the package name we have specified.
+
+3. once all checks pass, send the report creation request via HTTP post.
+
+
+    An example to understand how does ADT infrastructure responds
+
+And how these HTTP request are handled in ABAP backend? Just set
+breakpoint on the function module SADT_REST_RFC_ENDPOINT, which acts as
+the central dispatcher and the entry point for all request sent from
+Eclipse. You should observe that this FM will be called again and again,
+once you have done something in Eclipse.
+
+If you are patient enough, you could start debugging from this FM to
+learn how different handlers within the ADT backend infrastructure
+orchestrate to respond Eclipse front-end.
+
+I write a simple report to simulate the HTTP request sent from Eclipse:
+
+|DATA: lv_request  TYPE sadt_rest_request,
+      lv_response TYPE sadt_rest_response,
+      lv_header   LIKE LINE OF lv_request-header_fields.
+lv_request-request_line-method = 'GET'.
+lv_request-request_line-uri = '/sap/bc/adt/crm/product/STAB_PROD_01'.
+lv_request-request_line-version = 'HTTP/1.1'.
+CALL FUNCTION 'SADT_REST_RFC_ENDPOINT'
+  EXPORTING
+    request  = lv_request
+  IMPORTING
+    response = lv_response.
+
+|
+
+The url '/sap/bc/adt/crm/product/STAB_PROD_01' has prefix /sap/bc/adt/
+and is passed into the central dispatcher FM, so it could be processed
+by the ADT infrastructure. After we have studied how this simple program
+does work, we have already know the magic of the ADT processing logic.
+
+After report execution, we could get the description of the product
+specified in url, 'STAB_PROD_01', from the variable lv_response.
+
+And below are steps how to build this sample in your system.
+
+
+    1. Create a BAdI implementation on BAdI definition
+    BADI_ADT_REST_RFC_APPLICATION
+
+You could find lots of standard implementation already created on this
+BAdI definition, each for their specific use case.
+
+maintain the filter value as below, so that the very url containing the
+filter value will be handled by this BAdI implementation.
+
+Implement method register_workspaces by just copying below code:
+
+
+| method if_adt_discovery_provider~register_workspaces.
+    data workspace type ref to if_adt_discovery_workspace.
+    data discovery type ref to if_adt_disc_rest_rc_registry.
+    workspace = registry->register_workspace( me->get_application_title( ) ).
+    discovery = lcl_discovery=>create_instance(
+        workspace   = workspace
+        static_path = me->if_adt_rest_rfc_application~get_static_uri_path( ) ).
+    me->register_resources( discovery ).
+    workspace->finalize( ).
+  endmethod.
+
+|
+
+
+For method get_application_title, you can just hard code something.
+
+Implement method register_resources:
+
+
+|method REGISTER_RESOURCES.
+    registry->register_resource(
+      template      = '/crm/product/{product_id}'
+      handler_class = 'ZCL_ADT_RES_PRODUCT' ).
+endmethod.​
+
+|
+
+
+We will create and implement handler class ZCL_ADT_RES_PRODUCT in next step.
+
+
+    2. Create resource class ZCL_ADT_RES_PRODUCT
+
+In this example, resource class is responsible for retrieve the product
+description for the product whose id is passed in via url and serialize
+the description via content handler class ( which will be created in
+step3 ) and set response accordingly.
+
+Set CL_ADT_REST_RESOURCE as super class and only redefine method GET:
+
+|METHOD get.
+  DATA:     lv_product_id   TYPE comm_product-product_id,
+            lv_product_type TYPE comm_product-product_type,
+            lv_description  TYPE comm_prshtext-short_text,
+            lv_text         TYPE comm_prshtext,
+            lv_product      TYPE comm_product,
+            lv_data         TYPE zcl_adt_res_pro_content_handle=>ty_product,
+            content_handler TYPE REF TO if_adt_rest_content_handler.
+  request->get_uri_attribute(
+    EXPORTING
+      name      = 'product_id'
+      mandatory = abap_true
+     IMPORTING
+      value     = lv_product_id ).
+  SELECT SINGLE * FROM comm_product INTO lv_product WHERE product_id = lv_product_id.
+  IF sy-subrc = 4.
+    RAISE EXCEPTION TYPE cx_adt_res_not_found.
+  ELSE.
+  lv_data-product_id = lv_product-product_id.
+  lv_data-product_type = lv_product-product_type.
+  SELECT SINGLE * INTO lv_text FROM comm_prshtext WHERE product_guid = lv_product-product_guid.
+  lv_data-description = lv_text-short_text.
+  CREATE OBJECT content_handler TYPE zcl_adt_res_pro_content_handle.
+  response->set_body_data( content_handler = content_handler
+                             data            = lv_data ).
+  ENDIF.
+ENDMETHOD.
+
+|
+
+
+    3. create content handler class ZCL_ADT_RES_PRO_CONTENT_HANDLE
+
+Set CL_ADT_REST_ST_HANDLER as super class, implement CONSTRUCTOR as below:
+
+| super->constructor( st_name = co_st_name root_name = co_root_name content_type = co_content_type ).
+
+|
+
+Define three attributes as below. CO_ST_NAME just contains the technical
+name of transformation ID which you could find in transaction STRANS,
+and co_root_name contains the name of root node in XML response.
+
+Create two public types:
+
+
+|types:
+    BEGIN OF ty_product,
+      product_id type comm_product-product_id,
+      product_type  type comm_product-product_type,
+      description   type COMM_PRSHTEXT-SHORT_TEXT,
+     END OF ty_product .
+  types:
+    tt_product TYPE STANDARD TABLE OF ty_product .​
+
+|
+
+
+
+    Test the sample
+
+1. our BAdI implementation is returned by GET BADI according to the
+correct filter value:
+
+2. Our resource class get called. And the redefined method GET will be
+executed:
+
+3. our content handler class is called to transforma the ABAP data into
+XML using the standard transformation "ID":
+
+Hope this sample gives you a better understanding on how does ADT work.
+

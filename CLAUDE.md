@@ -1,10 +1,10 @@
-# SAP ABAP Remote FS MCP Server — Claude Code Configuration
+# SAP ABAP ADT MCP Server — Claude Code Configuration
 
-This file provides guidance to Claude Code (claude.ai/code) when working with the SAP ABAP Remote File System MCP Server project.
+This file provides guidance to Claude Code (claude.ai/code) when working with the SAP ABAP ADT MCP Server project.
 
 ## Project Overview
 
-- **Project name**: SAP ABAP Remote File System MCP Server
+- **Project name**: SAP ABAP ADT MCP Server
 - **Project type**: Model Context Protocol (MCP) server for SAP ABAP systems
 - **Brief description**: An MCP server that provides access to SAP ABAP objects via ADT (ABAP Development Tools) REST API, enabling AI assistants to browse and read SAP ABAP source code.
 - Node.js 14.x | JavaScript
@@ -14,8 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 ## Key Features
 
 - Connects to SAP systems via ADT REST API
-- Lists available ABAP objects (programs, classes, function groups, tables, etc.)
-- Reads source code of ABAP objects
+- Lists available ABAP objects using ADT repository infometypes
+- Reads source code of ABAP objects via standard ADT endpoints
 - Model Context Protocol compliant
 - Environment-based configuration
 - Health check endpoints
@@ -76,9 +76,9 @@ PORT=3000  # Optional
 
 ### Key Files
 - `index.js`: Contains the `SapAbapMcpServer` class implementing:
-  - Resource listing (`listResources`) - browses ABAP object types
-  - Resource reading (`readResource`) - fetches source code from SAP ADT
-  - ADT object list parsing (`parseAdtObjectList`) - handles XML responses
+  - Resource listing (`listResources`) - browses ABAP object types using ADT repository infometypes
+  - Resource reading (`readResource`) - fetches source code from SAP ADT via standard endpoints
+  - ADT object list parsing (`parseAdtObjectList`) - handles XML responses from ADT API
 - `package.json`: Defines dependencies and npm scripts
 
 ### ADT API Endpoints Used
@@ -137,4 +137,4 @@ npm update
 - Verify SAP ADT accessibility independently
 - Test individual API endpoints with tools like curl or Postman
 
-This server enables AI assistants to interact with SAP ABAP systems through a standardized MCP interface, facilitating code exploration, analysis, and development assistance.
+This server enables AI assistants to interact with SAP ABAP systems through a standardized MCP interface focused on the ADT protocol, facilitating code exploration, analysis, and development assistance.
