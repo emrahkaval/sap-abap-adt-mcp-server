@@ -1,0 +1,28 @@
+{
+  "name": "sap-abap-remotefs-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP SSE Server for SAP ABAP Remote File System",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [
+    "mcp",
+    "sap",
+    "abap",
+    "adt",
+    "remote-fs"
+  ],
+  "author": "Claude Code Assistant",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "axios": "^1.6.0",
+    "express": "^4.18.2",
+    "sse-express": "^0.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
